@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    networks:
+      - crm-network
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_DATABASE: webbercrm
+      MONGO_INITDB_ROOT_USERNAME: askold_astakhov
+      MONGO_INITDB_ROOT_PASSWORD: qTSGSqs8FvYzJLVd
+    volumes:
+      - ./mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro
+      - mongodb_data_container:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: always
+
+  crm-dev_backend:
+    container_name: crm-dev_backend
+    build: .
+    platform: linux/amd64
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - 3000:3000
+    networks:
+      - crm-network
+    command: npm run dev
+    env_file:
+      - .env.development
+    restart: unless-stopped
+    depends_on:
+      - mongo
+
+networks:
+  crm-network:
+volumes:
+  mongodb_data_container:

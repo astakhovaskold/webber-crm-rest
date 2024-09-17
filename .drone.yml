@@ -79,6 +79,41 @@ steps:
     depends_on:
     - lint
 
+  - name: notification
+    image: appleboy/drone-telegram
+    settings:
+      token:
+        from_secret: TELEGRAM_TOKEN
+      to:
+        from_secret: TELEGRAM_USER_ID
+    when:
+      status: [ success, failure ]
+    format: markdown
+    message: >
+      {{#success build.status}}
+      ✅ Build #{{build.number}} of `{{repo.name}}` succeeded.
+      
+      📝 Commit by {{commit.author}} on `{{commit.branch}}`:
+      
+      ```
+      {{commit.message}}
+      ```
+      
+      🌐 {{ build.link }}
+      {{else}}
+      ❌ Build #{{build.number}} of `{{repo.name}}` failed.
+      
+      📝 Commit by {{commit.author}} on `{{commit.branch}}`:
+      
+      ```
+      {{commit.message}}
+      ```
+      
+      🌐 {{ build.link }}
+      {{/success}}
+    depends_on:
+      - publish
+
 volumes:
   - name: cache
     host:
